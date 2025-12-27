@@ -8,6 +8,10 @@
 
 # joblib files are saved as list of dictionaries
 
+######################################################################################################################################################
+# Conflicting older visions of sklearn and machine learning models prevent recreation of Figure 3.
+######################################################################################################################################################
+
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -118,6 +122,210 @@ with ThreadPoolExecutor(max_workers=3) as executor:
 for res in results:
     print(res)
 
+###
+# Search for metrics files
+# The metrics files have <region>_metrics.joblib format
+
+metrics_url = "/content/xgb_models/West_metrics.joblib" # Update to point to the local file
+local_metrics_path = "/content/xgb_models/West_metrics.joblib" # Update to the local file path
+metrics_dir = os.path.dirname(local_metrics_path)
+
+print(f"Updated metrics_url to: {metrics_url}")
+print(f"Updated local_metrics_path to: {local_metrics_path}")
+print(f"Updated metrics_dir to: {metrics_dir}")
+
+import requests
+from bs4 import BeautifulSoup
+import re
+
+def find_joblib_files_metrics(url):
+    print(f"Searching in: {url}")
+    try:
+        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find all links
+        for link in soup.find_all('a', href=True):
+            href = link['href']
+
+            # If it's a metrics joblib file, print the full URL
+            if href.endswith('_metrics.joblib'):
+                print(f"FOUND: {url + href}")
+
+            # If it's a directory (ends in /) and not a parent dir, recurse
+            elif href.endswith('/') and href not in ['../', './']:
+                # Limit depth to avoid infinite loops
+                if url.count('/') < 10:
+                    find_joblib_files_metrics(url + href)
+    except Exception as e:
+        pass
+
+metrics_base_url = "https://portal.nersc.gov/project/m2977/ML_Precip/pmax_region_models/rf_models/"
+find_joblib_files_metrics(metrics_base_url)
+
+# Code works up to this point
+
+#####################################################################################################################################################
+import numpy as np
+from sklearn.metrics import r2_score, mean_squared_error
+
+def calculate_cc(y_true, y_pred):
+    """Calculates the Pearson Correlation Coefficient."""
+    # Ensure inputs are numpy arrays
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    if len(y_true) < 2 or np.std(y_true) == 0 or np.std(y_pred) == 0:
+        return np.nan # Correlation requires at least two points and non-zero standard deviation
+    return np.corrcoef(y_true, y_pred)[0, 1]
+
+def calculate_r2(y_true, y_pred):
+    """Calculates the R-squared score."""
+    return r2_score(y_true, y_pred)
+
+def calculate_nrmse(y_true, y_pred):
+    """Calculates the Normalized Root Mean Squared Error (NRMSE)."""
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    y_true_range = np.max(y_true) - np.min(y_true)
+    if y_true_range == 0:
+        return 0.0 # Or np.nan, depending on desired behavior for constant true values
+    return rmse / y_true_range
+
+print("Metric calculation functions (calculate_cc, calculate_r2, calculate_nrmse) defined.")
+
+
+import joblib
+import pandas as pd
+import numpy as np
+from sklearn.metrics import r2_score, mean_squared_error
+import sklearn.tree._tree as _tree
+import sklearn.ensemble._forest as _forest
+
+# Re-apply the simplified, robust _check_node_ndarray patch for scikit-learn
+_tree._check_node_ndarray = lambda *args, **kwargs: args[0] if args else None
+print("Re-applied: Scikit-learn _tree._check_node_ndarray patched successfully with a simplified bypass.")
+
+# Re-apply the 'monotonic_cst' attribute patch for RandomForestRegressor if missing
+if not hasattr(_forest.RandomForestRegressor, 'monotonic_cst'):
+    _forest.RandomForestRegressor.monotonic_cst = None
+    print("Re-applied: Patched sklearn.ensemble.RandomForestRegressor with 'monotonic_cst' attribute.")
+
+
+def calculate_cc(y_true, y_pred):
+    """Calculates the Pearson Correlation Coefficient."""
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    if len(y_true) < 2 or np.std(y_true) == 0 or np.std(y_pred) == 0:
+        return np.nan
+    return np.corrcoef(y_true, y_pred)[0, 1]
+
+def calculate_r2(y_true, y_pred):
+    """Calculates the R-squared score."""
+    return r2_score(y_true, y_pred)
+
+def calculate_nrmse(y_true, y_pred):
+    """Calculates the Normalized Root Mean Squared Error (NRMSE)."""
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    y_true_range = np.max(y_true) - np.min(y_true)
+    if y_true_range == 0:
+        return 0.0
+    return rmse / y_true_range
+
+def evaluate_model_metrics(model_path, X_test, y_true):
+    """
+    Loads a model, makes predictions, and calculates CC, R2, NRMSE.
+
+    Args:
+        model_path (str): Path to the joblib model file.
+        X_test (pd.DataFrame or np.array): Features for prediction.
+        y_true (pd.Series or np.array): Actual target values.
+
+    Returns:
+        dict: A dictionary containing 'CC', 'R2', and 'NRMSE' metrics.
+    """
+    try:
+        # Load the model
+        model = joblib.load(model_path)
+        print(f"Successfully loaded model from {model_path}")
+
+        # Make predictions
+        y_pred = model.predict(X_test)
+
+        # Calculate metrics
+        cc = calculate_cc(y_true, y_pred)
+        r2 = calculate_r2(y_true, y_pred)
+        nrmse = calculate_nrmse(y_true, y_pred)
+
+        return {'CC': cc, 'R2': r2, 'NRMSE': nrmse}
+
+    except Exception as e:
+        print(f"Error evaluating model {model_path}: {e}")
+        return None
+
+# --- Conceptual Usage --- 
+# This section demonstrates how the evaluation function would be used
+# if X_test and y_true data were available.
+
+model_file = '/content/rf_models/west.joblib'
+
+# DUMMY PLACEHOLDERS: These need to be replaced with actual test data
+# For large datasets, consider loading in chunks or using dask/sparse matrices
+# to prevent RAM crashes.
+X_test_data = None # Your actual test features here (e.g., pd.DataFrame)
+y_true_data = None # Your actual true values here (e.g., pd.Series)
+
+print("\n--- Conceptual Metric Calculation ---")
+if X_test_data is not None and y_true_data is not None:
+    print("X_test and y_true data are available. Proceeding with metric calculation.")
+    metrics = evaluate_model_metrics(model_file, X_test_data, y_true_data)
+    if metrics:
+        print(f"\nMetrics for {model_file}:")
+        for metric, value in metrics.items():
+            print(f"  {metric}: {value:.4f}")
+else:
+    print("X_test and y_true data are missing or are placeholders. Cannot calculate metrics without actual data.")
+    print("To calculate CC, R2, and NRMSE, we need the corresponding X_test (features) and y_true (actual values) datasets for each model.")
+    print("Please provide information on where to find or how to generate these datasets.")
+
+####################################################################################################################################################
+
+# RandomForestRegressor objects are in rf joblib files, not CC, R2, NRMSE metrics. X_test, y_true data are missing from 
+# <model type>/<region>_metrics.joblib files, so metrics such as CC, R2, and NRMSE cannot be calculated either.
+
+# Serialization incompatibility error for XGBoost models:
+# typically occurs because the model file was saved using a different version of the XGBoost library than the one currently installed 
+# in our environment. When machine learning libraries evolve, their internal data structures and how they save models 
+# (their 'serialization format') can change. An older model saved in an old format might not be directly readable by a newer library version, 
+# leading to errors like 'Invalid serialization file.'
+
+# XGBoost objects would be in xgboost joblib files, and again not CC, R2, NRMSE metrics. 
+
+
+### joblib is not able to be read because of outdated version of sklearn conflicting with version of Python in Google Colab
+### Patch for older version of sklearn
+
+import sklearn.tree._tree as _tree
+import inspect
+
+# Store the original function
+_check_node_ndarray_original = _tree._check_node_ndarray
+
+# Define the patched function
+def _check_node_ndarray_patched(*args, **kwargs):
+    # Get the signature of the original function
+    original_signature = inspect.signature(_check_node_ndarray_original)
+    
+    # Prepare arguments to pass to the original function based on its signature
+    bound_args = original_signature.bind(*args, **kwargs)
+    bound_args.apply_defaults()
+    
+    return _check_node_ndarray_original(*bound_args.args, **bound_args.kwargs)
+
+# Apply the patch
+_tree._check_node_ndarray = _check_node_ndarray_patched
+
+print("Scikit-learn _tree._check_node_ndarray patched successfully with dynamic argument handling.")
+
+
 
 import joblib
 import gc
@@ -212,7 +420,7 @@ print("\n--- Process Complete ---")
 # This version handles the new 'expected_dtype' keyword in scikit-learn 1.6+
 #_tree._check_node_ndarray = lambda *args, **kwargs: args[0] if args else None
 
-
+#####################################################################################################################################################
 
 
 

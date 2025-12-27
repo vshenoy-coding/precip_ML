@@ -23,6 +23,14 @@
 # Run this first
 #path_to_nc = robust_download_narr(1979)
 
+# Statistics review:
+# R-Squared (R2): Represents how much of the variance is explained by time. 
+
+# Standard Error: Measures the "noise" or typical deviation from the trend line.
+
+# Dataset 
+# NARR Resolution: Data is derived from the North American Regional Reanalysis with a 3-hour temporal window and ~32km spatial resolution.
+
 # !apt-get install -y libgdal-dev libgeos-dev libproj-dev
 # !pip install cartopy --quiet
 
@@ -327,3 +335,25 @@ ax.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', frameon=True
 ax.grid(True, which='both', linestyle='--', alpha=0.3)
 plt.tight_layout()
 plt.show()
+
+#===================================================================================================================================================
+Conclusion: The Compound Risk of Future Precipitation
+
+# The data reveals a trend to an era of "compound climate risk," defined not just by how often it rains, 
+# but by the unprecedented power of the precipitation itself. By comparing historical observations with physics-based projections, 
+# two distinct but reinforcing trends emerge:
+# The Rise of the "Extreme" (Frequency): We are seeing a dramatic increase in the number of high-intensity events. 
+# What was once considered a "rare" storm is rapidly becoming a common occurrence. 
+# This trend suggests that historical flood defenses—dams, levees, and urban drainage—are being "tested" significantly more often than they were 
+# in the 20th century.
+# The Arrival of the "Stronger" (Intensity): While frequency tells us how often an event occurs, intensity tells us how strong the event is. 
+# Following the Clausius-Clapeyron relationship, which dictates that a warmer atmosphere must hold more moisture, 
+# our projections show that the physical "ceiling" of these storms is rising. By 2100, the most powerful storms could deliver nearly 75% more water 
+# in a single window than those of the 1970s.
+# The Bottom Line: The danger lies in the intersection of these lines. We are not just facing more frequent storms, 
+# and we are not just facing more powerful storms; we are facing more frequent, more powerful storms. 
+# This "double-whammy" effect means that infrastructure designed for the climate of the past will likely face more frequent stresses 
+# while also being subjected to peak loads that exceed their original engineering limits. 
+# Addressing this risk requires moving beyond historical averages and planning for a future where the "extreme" is the new normal.
+
+

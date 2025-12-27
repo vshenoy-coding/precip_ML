@@ -9,7 +9,7 @@
 # joblib files are saved as list of dictionaries
 
 ######################################################################################################################################################
-# Conflicting older visions of sklearn and machine learning models prevent recreation of Figure 3. as well as Figures 4. through 8., and Figure 10.
+# Conflicting older visions of sklearn and machine learning models prevent recreation of Figure 3. as well as Figures 4. through 10. inclusive,
 # which make use of results from machine learning models.
 ######################################################################################################################################################
 

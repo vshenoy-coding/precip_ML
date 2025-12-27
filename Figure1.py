@@ -19,7 +19,7 @@ ax.set_facecolor('white')
 
 # 3. PLOT DATA (The Rainbow Pixels)
 sc = ax.scatter(df['lon'], df['lat'], c=df['terrain_height'], s=1.2, 
-                cmap='gist_ncar', vmin=0, vmax=3500, edgecolors='none', 
+                cmap='jet', vmin=0, vmax=3500, edgecolors='none', 
                 transform=ccrs.PlateCarree(), zorder=1)
 
 # 4. THE SCRAGGLY BORDERS
